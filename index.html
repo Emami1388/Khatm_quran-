@@ -1,0 +1,72 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ختم قرآن</title>
+  <style>
+    body { font-family: sans-serif; background: #f9f9f9; padding: 20px; direction: rtl; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    th { background-color: #eee; }
+    input[type="text"] { width: 90%; }
+    button { padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h1>جدول ختم قرآن</h1>
+  <table id="quran-table">
+    <thead>
+      <tr>
+        <th>شماره صفحه</th>
+        <th>نام قاری</th>
+        <th>خوانده شده؟</th>
+        <th>ویرایش</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    const supabaseUrl = 'https://vblfnodaillikoxniryu.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZibGZub2RhaWxsaWtveG5pcnl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3NjA3MTUsImV4cCI6MjA2MzMzNjcxNX0.GmR0DtE-RvE41n7mx-qWqL6ULe0q93XdH9Afig1re2I'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    async function fetchData() {
+      const { data, error } = await supabase.from('Khatm_quran').select('*').order('Page_num', { ascending: true })
+      if (error) {
+        console.error('خطا در دریافت اطلاعات:', error)
+        return
+      }
+      const tbody = document.querySelector('#quran-table tbody')
+      tbody.innerHTML = ''
+      data.forEach(row => {
+        const tr = document.createElement('tr')
+        tr.innerHTML = `
+          <td>${row.Page_num}</td>
+          <td><input type="text" value="${row.Reader_name || ''}" data-id="${row.id}" /></td>
+          <td><input type="checkbox" ${row.Read ? 'checked' : ''} data-id="${row.id}" /></td>
+          <td><button data-id="${row.id}">ذخیره</button></td>
+        `
+        tbody.appendChild(tr)
+      })
+    }
+
+    document.addEventListener('click', async (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        const id = e.target.dataset.id
+        const row = e.target.closest('tr')
+        const name = row.querySelector('input[type="text"]').value
+        const read = row.querySelector('input[type="checkbox"]').checked
+        const { error } = await supabase.from('Khatm_quran').update({ Reader_name: name, Read: read }).eq('id', id)
+        if (error) alert('خطا در ذخیره‌سازی')
+        else alert('ذخیره شد')
+      }
+    })
+
+    fetchData()
+  </script>
+</body>
+</html>
